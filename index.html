@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <title>CCTV Service Reviews</title>
   <style>
-    body { font-family: Arial; max-width: 700px; margin: auto; padding: 20px; }
-    input, textarea, select { width: 100%; margin: 8px 0; padding: 10px; }
+    body { font-family: Arial; max-width: 600px; margin: auto; padding: 20px; }
+    input, textarea, select, button { width: 100%; margin: 10px 0; padding: 10px; }
     .review { border: 1px solid #ccc; padding: 15px; margin: 10px 0; border-radius: 5px; }
     .stars { color: gold; font-size: 18px; }
   </style>
@@ -13,9 +13,9 @@
 <body>
   <h2>Submit Your Review</h2>
   <form id="reviewForm">
-    <input type="text" id="name" placeholder="Your Name" required><br>
-    <input type="text" id="phone" placeholder="Your Phone Number" required><br>
-    <textarea id="message" placeholder="Write something..." required></textarea><br>
+    <input type="text" id="name" placeholder="Your Name" required>
+    <input type="text" id="phone" placeholder="Your Phone Number" required>
+    <textarea id="message" placeholder="Write something..." required></textarea>
     <label>Star Rating:</label>
     <select id="rating" required>
       <option value="">Select Stars</option>
@@ -24,24 +24,24 @@
       <option value="3">★★★</option>
       <option value="2">★★</option>
       <option value="1">★</option>
-    </select><br>
+    </select>
     <button type="submit">Submit Review</button>
   </form>
 
   <h2>Customer Reviews</h2>
   <div id="reviews"></div>
 
-  <!-- Firebase SDK -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore-compat.js"></script>
 
   <script>
-    // Your Firebase configuration
+    // Your Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyCQy6jOFUjqK8gOv7ON4UkexTBvOtE8z5c",
       authDomain: "cctv-service-review.firebaseapp.com",
       projectId: "cctv-service-review",
-      storageBucket: "cctv-service-review.firebasestorage.app",
+      storageBucket: "cctv-service-review.appspot.com",
       messagingSenderId: "643530221833",
       appId: "1:643530221833:web:6d24429492a5817e6dcbd8",
       measurementId: "G-RD32D53Y0Z"
@@ -61,10 +61,13 @@
       const message = document.getElementById('message').value;
       const rating = parseInt(document.getElementById('rating').value);
 
-      await db.collection("reviews").add({ name, phone, message, rating, time: Date.now() });
-
-      form.reset();
-      loadReviews();
+      try {
+        await db.collection("reviews").add({ name, phone, message, rating, time: Date.now() });
+        form.reset();
+        loadReviews();
+      } catch (error) {
+        alert("Failed to save review. Error: " + error.message);
+      }
     });
 
     async function loadReviews() {
