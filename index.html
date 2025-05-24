@@ -14,7 +14,8 @@
   <h2>Submit Your Review</h2>
   <form id="reviewForm">
     <input type="text" id="name" placeholder="Your Name" required>
-    <input type="text" id="phone" placeholder="Your Phone Number" required>
+    <input type="text" id="phone" placeholder="Your 11-digit Bangladeshi Phone Number" required>
+    <input type="text" id="location" placeholder="Your Location (e.g., Dhaka)" required>
     <textarea id="message" placeholder="Write something..." required></textarea>
     <label>Star Rating:</label>
     <select id="rating" required>
@@ -36,7 +37,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore-compat.js"></script>
 
   <script>
-    // Your Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyCQy6jOFUjqK8gOv7ON4UkexTBvOtE8z5c",
       authDomain: "cctv-service-review.firebaseapp.com",
@@ -47,7 +47,6 @@
       measurementId: "G-RD32D53Y0Z"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
@@ -56,17 +55,46 @@
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const name = document.getElementById('name').value;
-      const phone = document.getElementById('phone').value;
-      const message = document.getElementById('message').value;
+
+      const name = document.getElementById('name').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const location = document.getElementById('location').value.trim();
+      const message = document.getElementById('message').value.trim();
       const rating = parseInt(document.getElementById('rating').value);
 
+      // Name validation (only letters and spaces)
+      const nameRegex = /^[A-Za-z\s]{2,}$/;
+      if (!nameRegex.test(name)) {
+        alert("Please enter a valid name (letters and spaces only).");
+        return;
+      }
+
+      // Bangladeshi phone number validation
+      const phoneRegex = /^01[0-9]{9}$/;
+      if (!phoneRegex.test(phone)) {
+        alert("Please enter a valid 11-digit Bangladeshi phone number (starts with 01).");
+        return;
+      }
+
       try {
-        await db.collection("reviews").add({ name, phone, message, rating, time: Date.now() });
+        // Check if phone already exists
+        const existing = await db.collection("reviews").where("phone", "==", phone).get();
+        if (!existing.empty) {
+          alert("You have already submitted a review with this number.");
+          return;
+        }
+
+        // Save new review
+        await db.collection("reviews").add({
+          name, phone, location, message, rating, time: Date.now()
+        });
+
+        alert("Review submitted successfully!");
         form.reset();
         loadReviews();
+
       } catch (error) {
-        alert("Failed to save review. Error: " + error.message);
+        alert("Error saving review: " + error.message);
       }
     });
 
@@ -78,6 +106,7 @@
         reviewsDiv.innerHTML += `
           <div class="review">
             <strong>${data.name}</strong> (${data.phone})<br>
+            <em>Location: ${data.location}</em><br>
             <div class="stars">${"★".repeat(data.rating)}${"☆".repeat(5 - data.rating)}</div>
             <p>${data.message}</p>
           </div>
