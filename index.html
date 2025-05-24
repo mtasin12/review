@@ -2,20 +2,73 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>CCTV Service Reviews</title>
+  <title>Toukir CCTV Service Review Page</title>
   <style>
-    body { font-family: Arial; max-width: 600px; margin: auto; padding: 20px; }
-    input, textarea, select, button { width: 100%; margin: 10px 0; padding: 10px; }
-    .review { border: 1px solid #ccc; padding: 15px; margin: 10px 0; border-radius: 5px; }
-    .stars { color: gold; font-size: 18px; }
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 700px;
+      margin: auto;
+      padding: 20px;
+    }
+    .profile {
+      text-align: center;
+      border: 1px solid #ccc;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 30px;
+    }
+    .profile img {
+      width: 100px;
+      border-radius: 50%;
+      margin-bottom: 10px;
+    }
+    h2 {
+      color: #333;
+    }
+    input, textarea, select, button {
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+    .review {
+      border: 1px solid #ccc;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 5px;
+    }
+    .stars {
+      color: gold;
+      font-size: 18px;
+    }
+    #messageBox {
+      color: green;
+      margin: 10px 0;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
+
+  <!-- Owner Profile Section -->
+  <div class="profile">
+    <img src="/toukir cctv spacialist.jpg" alt="Owner Photo">
+    <h2>Toukir CCTV Specialist</h2>
+    <p>Provide professional CCTV camera installation, maintenance, and support across Bangladesh. Trusted, reliable, and affordable service guaranteed.</p>
+    <p><strong>Phone:</strong> <a href="tel:+8801880663885">01880663885</a></p>
+    <p><strong>Location:</strong> Chittagong, Bangladesh</p>
+    <p><strong>Service Area:</strong> Nationwide</p>
+    <p><strong>Hours:</strong> 9 AM - 9 PM (Everyday)</p>
+    <p><a href="https://wa.me/8801880663885">💬 WhatsApp</a></p>
+  </div>
+
+  <!-- Review Form -->
   <h2>Submit Your Review</h2>
+  <div id="messageBox"></div>
   <form id="reviewForm">
     <input type="text" id="name" placeholder="Your Name" required>
-    <input type="text" id="phone" placeholder="Your 11-digit Bangladeshi Phone Number" required>
-    <input type="text" id="location" placeholder="Your Location (e.g., Dhaka)" required>
+    <input type="text" id="phone" placeholder="Your Phone Number" required>
+    <input type="text" id="location" placeholder="Your Location" required>
     <textarea id="message" placeholder="Write something..." required></textarea>
     <label>Star Rating:</label>
     <select id="rating" required>
@@ -29,6 +82,7 @@
     <button type="submit">Submit Review</button>
   </form>
 
+  <!-- Review List -->
   <h2>Customer Reviews</h2>
   <div id="reviews"></div>
 
@@ -52,6 +106,7 @@
 
     const form = document.getElementById('reviewForm');
     const reviewsDiv = document.getElementById('reviews');
+    const messageBox = document.getElementById('messageBox');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -62,14 +117,12 @@
       const message = document.getElementById('message').value.trim();
       const rating = parseInt(document.getElementById('rating').value);
 
-      // Name validation (only letters and spaces)
       const nameRegex = /^[A-Za-z\s]{2,}$/;
       if (!nameRegex.test(name)) {
         alert("Please enter a valid name (letters and spaces only).");
         return;
       }
 
-      // Bangladeshi phone number validation
       const phoneRegex = /^01[0-9]{9}$/;
       if (!phoneRegex.test(phone)) {
         alert("Please enter a valid 11-digit Bangladeshi phone number (starts with 01).");
@@ -77,24 +130,26 @@
       }
 
       try {
-        // Check if phone already exists
-        const existing = await db.collection("reviews").where("phone", "==", phone).get();
-        if (!existing.empty) {
+        const docRef = db.collection("reviews").doc(phone);
+        const existing = await docRef.get();
+
+        if (existing.exists) {
           alert("You have already submitted a review with this number.");
           return;
         }
 
-        // Save new review
-        await db.collection("reviews").add({
+        await docRef.set({
           name, phone, location, message, rating, time: Date.now()
         });
 
-        alert("Review submitted successfully!");
+        messageBox.textContent = "✅ Review submitted successfully!";
+        messageBox.style.color = 'green';
         form.reset();
         loadReviews();
 
       } catch (error) {
-        alert("Error saving review: " + error.message);
+        messageBox.textContent = "❌ Error saving review: " + error.message;
+        messageBox.style.color = 'red';
       }
     });
 
@@ -103,12 +158,15 @@
       const snapshot = await db.collection("reviews").orderBy("rating", "desc").get();
       snapshot.forEach(doc => {
         const data = doc.data();
+        const maskedPhone = data.phone.slice(0, 3) + "****" + data.phone.slice(7);
+        const date = new Date(data.time).toLocaleString();
         reviewsDiv.innerHTML += `
           <div class="review">
-            <strong>${data.name}</strong> (${data.phone})<br>
+            <strong>${data.name}</strong> (${maskedPhone})<br>
             <em>Location: ${data.location}</em><br>
             <div class="stars">${"★".repeat(data.rating)}${"☆".repeat(5 - data.rating)}</div>
             <p>${data.message}</p>
+            <small>Posted on: ${date}</small>
           </div>
         `;
       });
