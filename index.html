@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Service Reviews</title>
+  <title>CCTV Service Reviews</title>
   <style>
     body { font-family: Arial; max-width: 700px; margin: auto; padding: 20px; }
     input, textarea, select { width: 100%; margin: 8px 0; padding: 10px; }
@@ -31,32 +31,58 @@
   <h2>Customer Reviews</h2>
   <div id="reviews"></div>
 
-  <!-- Firebase SDKs -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore-compat.js"></script>
 
   <script>
-   // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+    // Your Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyCQy6jOFUjqK8gOv7ON4UkexTBvOtE8z5c",
+      authDomain: "cctv-service-review.firebaseapp.com",
+      projectId: "cctv-service-review",
+      storageBucket: "cctv-service-review.firebasestorage.app",
+      messagingSenderId: "643530221833",
+      appId: "1:643530221833:web:6d24429492a5817e6dcbd8",
+      measurementId: "G-RD32D53Y0Z"
+    };
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyCQy6jOFUjqK8gOv7ON4UkexTBvOtE8z5c",
-  authDomain: "cctv-service-review.firebaseapp.com",
-  projectId: "cctv-service-review",
-  storageBucket: "cctv-service-review.firebasestorage.app",
-  messagingSenderId: "643530221833",
-  appId: "1:643530221833:web:6d24429492a5817e6dcbd8",
-  measurementId: "G-RD32D53Y0Z"
-};
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+    const form = document.getElementById('reviewForm');
+    const reviewsDiv = document.getElementById('reviews');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('name').value;
+      const phone = document.getElementById('phone').value;
+      const message = document.getElementById('message').value;
+      const rating = parseInt(document.getElementById('rating').value);
+
+      await db.collection("reviews").add({ name, phone, message, rating, time: Date.now() });
+
+      form.reset();
+      loadReviews();
+    });
+
+    async function loadReviews() {
+      reviewsDiv.innerHTML = "";
+      const snapshot = await db.collection("reviews").orderBy("rating", "desc").get();
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        reviewsDiv.innerHTML += `
+          <div class="review">
+            <strong>${data.name}</strong> (${data.phone})<br>
+            <div class="stars">${"★".repeat(data.rating)}${"☆".repeat(5 - data.rating)}</div>
+            <p>${data.message}</p>
+          </div>
+        `;
+      });
+    }
+
+    loadReviews();
   </script>
 </body>
 </html>
